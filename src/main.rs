@@ -10,24 +10,27 @@ use anyhow::Result;
 #[command(version, about)]
 struct Args {
     /// Start printing when you see this regex, and print that line too.
-    #[arg(short = 'f', long)]
+    #[arg(short = 'f', long, value_name="REGEX")]
     from_incl: Option<Regex>,
 
     /// Start printing when you see this regex, but don't print that line.
-    #[arg(short = 'F', long, conflicts_with = "from_incl")]
+    #[arg(short = 'F', long, conflicts_with = "from_incl", value_name="REGEX")]
     from_excl: Option<Regex>,
 
     /// Stop printing when you see this regex, but print this line.
-    #[arg(short = 't', long)]
+    #[arg(short = 't', long, value_name="REGEX")]
     to_incl: Option<Regex>,
 
     /// Stop printing when you see this regex, but don't print this line
-    #[arg(short = 't', long)]
-    #[arg(short = 'T', long, conflicts_with = "to_incl")]
+    #[arg(short = 'T', long, conflicts_with = "to_incl", value_name="REGEX")]
     to_excl: Option<Regex>,
 
     /// Path of the file to read. "-" for stdin. Omit for stdin.
     input_file: Option<String>,
+
+    /// Stop reading after finding NUM matches.
+    #[arg(short, long, value_name="NUM")]
+    max_count: Option<u64>,
 }
 
 fn main() -> Result<()> {
@@ -52,8 +55,14 @@ fn main() -> Result<()> {
         };
 
     let mut printing = from_regex.is_none();
+    let mut num_matches = 0;
 
     for line in input.lines() {
+        if args.max_count.is_some_and(|m| num_matches >= m) {
+            // We've hit the max
+            break;
+        }
+
         let line = line?;
         if !printing {
             if from_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
@@ -66,6 +75,7 @@ fn main() -> Result<()> {
             // printing = true
             if to_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
                 printing = false;
+                num_matches += 1;
                 if to_incl {
                     writeln!(&mut stdout, "{line}")?;
                 }

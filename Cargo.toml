@@ -3,7 +3,7 @@ name = "spangrep"
 version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0+"
-description = "Grep out a spam of lines"
+description = "Grep out a span of lines"
 repository = "https://github.com/amandasaurus/spangrep"
 homepage = "https://github.com/amandasaurus/spangrep"
 
