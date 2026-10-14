@@ -6,6 +6,9 @@ use regex::Regex;
 
 use anyhow::Result;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Parser, Debug)]
 #[command(version, about)]
 struct Args {
@@ -36,23 +39,28 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let from_incl = args.from_incl.is_some();
-    let from_regex = args.from_incl.or(args.from_excl);
-
-    let to_incl = args.to_incl.is_some();
-    let to_regex = args.to_incl.or(args.to_excl);
-
-    let mut stdout = std::io::stdout();
-
     let input: Box<dyn BufRead> =
         if args.input_file.is_none() || args.input_file.as_ref().is_some_and(|s| s == "-") {
             let stdin = std::io::stdin();
             Box::new(stdin.lock())
-        } else if let Some(filename) = args.input_file {
+        } else if let Some(ref filename) = args.input_file {
             Box::new(BufReader::new(File::open(filename)?))
         } else {
             unreachable!()
         };
+
+    let stdout = std::io::stdout().lock();
+
+    run(&args, input, stdout)
+}
+
+fn run(args: &Args, input: impl BufRead, mut output: impl Write) -> Result<()> {
+
+    let from_incl = args.from_incl.is_some();
+    let from_regex = args.from_incl.clone().or(args.from_excl.clone());
+
+    let to_incl = args.to_incl.is_some();
+    let to_regex = args.to_incl.clone().or(args.to_excl.clone());
 
     let mut printing = from_regex.is_none();
     let mut num_matches = 0;
@@ -68,7 +76,7 @@ fn main() -> Result<()> {
             if from_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
                 printing = true;
                 if from_incl {
-                    writeln!(&mut stdout, "{line}")?;
+                    writeln!(&mut output, "{line}")?;
                 }
             }
         } else {
@@ -77,10 +85,10 @@ fn main() -> Result<()> {
                 printing = false;
                 num_matches += 1;
                 if to_incl {
-                    writeln!(&mut stdout, "{line}")?;
+                    writeln!(&mut output, "{line}")?;
                 }
             } else {
-                writeln!(&mut stdout, "{line}")?;
+                writeln!(&mut output, "{line}")?;
             }
         }
     }
