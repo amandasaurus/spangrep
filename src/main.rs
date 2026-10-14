@@ -51,16 +51,15 @@ fn main() -> Result<()> {
 
     let stdout = std::io::stdout().lock();
 
-    run(&args, input, stdout)
+    run(args, input, stdout)
 }
 
-fn run(args: &Args, input: impl BufRead, mut output: impl Write) -> Result<()> {
-
+fn run(args: Args, input: impl BufRead, mut output: impl Write) -> Result<()> {
     let from_incl = args.from_incl.is_some();
-    let from_regex = args.from_incl.clone().or(args.from_excl.clone());
+    let from_regex = args.from_incl.or(args.from_excl);
 
     let to_incl = args.to_incl.is_some();
-    let to_regex = args.to_incl.clone().or(args.to_excl.clone());
+    let to_regex = args.to_incl.or(args.to_excl);
 
     let mut printing = from_regex.is_none();
     let mut num_matches = 0;
