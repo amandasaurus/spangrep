@@ -1,4 +1,4 @@
-# Unreleased
+# 0.2 (2026-10-14)
 
 * Add `-m`/`--max-count` option like `grep(1)`
 
