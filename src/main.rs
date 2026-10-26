@@ -28,6 +28,12 @@ struct Args {
     #[arg(short = 'T', long, conflicts_with = "to_incl", value_name = "REGEX")]
     to_excl: Option<Regex>,
 
+    /// Once we start printing (after -f/-F), print only lines which match this regex. Once a line
+    /// doesn't match this, printing stops.
+    /// Cannot be used with -t/-T
+    #[arg(short = 'w', long="while", conflicts_with_all = ["to_incl", "to_excl"], value_name = "REGEX")]
+    while_: Option<Regex>,
+
     /// Path of the file to read. "-" for stdin. Omit for stdin.
     input_file: Option<String>,
 
@@ -61,6 +67,8 @@ fn run(args: Args, input: impl BufRead, mut output: impl Write) -> Result<()> {
     let to_incl = args.to_incl.is_some();
     let to_regex = args.to_incl.or(args.to_excl);
 
+    let while_regex = args.while_;
+
     let mut printing = from_regex.is_none();
     let mut num_matches = 0;
 
@@ -71,24 +79,24 @@ fn run(args: Args, input: impl BufRead, mut output: impl Write) -> Result<()> {
         }
 
         let line = line?;
-        if !printing {
-            if from_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
-                printing = true;
-                if from_incl {
-                    writeln!(&mut output, "{line}")?;
-                }
-            }
-        } else {
-            // printing = true
-            if to_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
-                printing = false;
-                num_matches += 1;
-                if to_incl {
-                    writeln!(&mut output, "{line}")?;
-                }
-            } else {
+        if !printing && from_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
+            printing = true;
+            if from_incl {
                 writeln!(&mut output, "{line}")?;
             }
+        } else if printing && while_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
+            writeln!(&mut output, "{line}")?;
+        } else if printing && while_regex.as_ref().is_some_and(|r| !r.is_match(&line)) {
+            printing = false;
+            num_matches += 1;
+        } else if printing && to_regex.as_ref().is_some_and(|r| r.is_match(&line)) {
+            printing = false;
+            num_matches += 1;
+            if to_incl {
+                writeln!(&mut output, "{line}")?;
+            }
+        } else if printing {
+            writeln!(&mut output, "{line}")?;
         }
     }
 
