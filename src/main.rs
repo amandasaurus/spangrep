@@ -13,26 +13,26 @@ mod tests;
 #[command(version, about)]
 struct Args {
     /// Start printing when you see this regex, and print that line too.
-    #[arg(short = 'f', long, value_name="REGEX")]
+    #[arg(short = 'f', long, value_name = "REGEX")]
     from_incl: Option<Regex>,
 
     /// Start printing when you see this regex, but don't print that line.
-    #[arg(short = 'F', long, conflicts_with = "from_incl", value_name="REGEX")]
+    #[arg(short = 'F', long, conflicts_with = "from_incl", value_name = "REGEX")]
     from_excl: Option<Regex>,
 
     /// Stop printing when you see this regex, but print this line.
-    #[arg(short = 't', long, value_name="REGEX")]
+    #[arg(short = 't', long, value_name = "REGEX")]
     to_incl: Option<Regex>,
 
     /// Stop printing when you see this regex, but don't print this line
-    #[arg(short = 'T', long, conflicts_with = "to_incl", value_name="REGEX")]
+    #[arg(short = 'T', long, conflicts_with = "to_incl", value_name = "REGEX")]
     to_excl: Option<Regex>,
 
     /// Path of the file to read. "-" for stdin. Omit for stdin.
     input_file: Option<String>,
 
     /// Stop reading after finding NUM matches.
-    #[arg(short, long, value_name="NUM")]
+    #[arg(short, long, value_name = "NUM")]
     max_count: Option<u64>,
 }
 
